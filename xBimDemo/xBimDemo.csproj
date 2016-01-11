@@ -121,6 +121,8 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Converters\BoolToVisibilityConverter.cs" />
+    <Compile Include="Converters\InverseBooleanConverter.cs" />
     <Compile Include="xBimLanding.xaml.cs">
       <DependentUpon>xBimLanding.xaml</DependentUpon>
     </Compile>

@@ -22,9 +22,11 @@ namespace xBimDemo
     {
         #region Field
 
+        private const string IfcFilename = @"C:\Temp\ifc_files\Duplex_Plumbing_20121113.ifc";
         private BackgroundWorker _worker;
         private string _temporaryXbimFileName;
         private string _mainWindowsName;
+        private bool _isLoading;
 
         #endregion Field
 
@@ -35,6 +37,7 @@ namespace xBimDemo
             InitializeComponent();
             CreateWorker();
             StatusMsg.Text = "Ready";
+            _isLoading = false;
         }
 
         /// <summary>
@@ -66,12 +69,13 @@ namespace xBimDemo
             }
         }
 
-        public XbimModel Model
+        public bool IsLoading
         {
-            get
+            get { return _isLoading; }
+            set
             {
-                var op = MainFrame.DataContext as ObjectDataProvider;
-                return op?.ObjectInstance as XbimModel;
+                _isLoading = value;
+                OnPropertyChanged(nameof(IsLoading));
             }
         }
 
@@ -90,14 +94,14 @@ namespace xBimDemo
         private void OpenFile(object s, DoWorkEventArgs args)
         {
             var worker = s as BackgroundWorker;
-            const string ifcFilename = @"C:\Temp\ifc_files\Duplex_Plumbing_20121113.ifc";
             var model = new XbimModel();
             try
             {
                 if (worker != null)
                 {
+                    IsLoading = true;
                     _temporaryXbimFileName = Path.GetTempFileName();
-                    model.CreateFrom(ifcFilename,
+                    model.CreateFrom(IfcFilename,
                         _temporaryXbimFileName,
                         worker.ReportProgress,
                         true);
@@ -128,7 +132,7 @@ namespace xBimDemo
             catch (Exception ex)
             {
                 var sb = new StringBuilder();
-                sb.AppendLine("Error reading " + ifcFilename);
+                sb.AppendLine("Error reading " + IfcFilename);
                 var indent = "\t";
                 while (ex != null)
                 {
@@ -164,6 +168,7 @@ namespace xBimDemo
                     ModelProvider.Refresh();
                     Bar.Value = 0;
                     StatusMsg.Text = "";
+                    IsLoading = false;
                 }
             };
         }

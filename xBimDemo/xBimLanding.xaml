@@ -3,24 +3,40 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:xBimDemo"
         xmlns:xbim="http://schemas.Xbim.com/Presentation"
+        xmlns:converter="clr-namespace:xBimDemo.Converters"
         mc:Ignorable="d"
-        Name="BimLanding"
-        Height="600" Width="800">
+        Name="BimLanding">
     <UserControl.Resources>
         <ObjectDataProvider x:Key="ModelProvider"  IsInitialLoadEnabled="False" ></ObjectDataProvider>
+        <converter:BoolToVisibilityConverter x:Key="StatusBarVisibilityConverter" TrueValue="Visible" FalseValue="Hidden" />
+        <converter:InverseBooleanConverter x:Key="InverseBooleanConverter" />
     </UserControl.Resources>
-    <StackPanel DataContext="{StaticResource ModelProvider}" Name="MainFrame">
-        <xbim:DrawingControl3D Width="Auto" Height="500"
-                               ModelOpacity="0.75"
-                               Background="Aqua"
-                               SelectedEntity="{Binding Path=SelectedItem, ElementName=BimLanding, Mode=TwoWay}"
-                               Model ="{Binding}">
+    <Grid DataContext="{StaticResource ModelProvider}" Name="MainFrame">
+        <xbim:DrawingControl3D
+            ModelOpacity="0.75"
+            SelectedEntity="{Binding Path=SelectedItem, ElementName=BimLanding, Mode=TwoWay}"
+            Model ="{Binding}">
+            <xbim:DrawingControl3D.Background>
+                <LinearGradientBrush EndPoint="0.5,1" MappingMode="RelativeToBoundingBox" StartPoint="0.5,0">
+                    <GradientStop Color="#FFB9B1B1" Offset="1" />
+                    <GradientStop Color="#FFFAF8FF" />
+                </LinearGradientBrush>
+            </xbim:DrawingControl3D.Background>
         </xbim:DrawingControl3D>
-        <Button Click="ButtonBase_OnClick" VerticalAlignment="Bottom">Import</Button>
-        <ProgressBar Height="10" Name="Bar" Minimum="0" Maximum="100"></ProgressBar>
-        <TextBlock Text="{Binding ElementName=Bar, Path=Value, StringFormat={}{0:0}%}" HorizontalAlignment="Center" VerticalAlignment="Center" />
-        <TextBlock Name="StatusMsg"></TextBlock>
-    </StackPanel>
+        <StatusBar Height="20" Width="150" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                   Visibility="{Binding Path=IsLoading, ElementName=BimLanding, Converter={StaticResource StatusBarVisibilityConverter}}">
+            <StatusBarItem HorizontalAlignment="Right">
+                <Grid>
+                    <ProgressBar Name="Bar" Height="20" Maximum="100" Minimum="0" Width="150"  HorizontalAlignment="Center" VerticalAlignment="Center"></ProgressBar>
+                    <TextBlock Name="StatusMsg" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="Chocolate">Parsing</TextBlock>
+                    <!--<TextBlock Text="{Binding ElementName=Bar, Path=Value, StringFormat={}{0:0}%}" HorizontalAlignment="Center" VerticalAlignment="Center" />-->
+                </Grid>
+            </StatusBarItem>
+        </StatusBar>
+        <Button HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                Click="ButtonBase_OnClick"
+                IsEnabled="{Binding Path=IsLoading, ElementName=BimLanding, Converter={StaticResource InverseBooleanConverter}}"
+                >Import</Button>
+    </Grid>
 </UserControl>
