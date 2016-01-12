@@ -123,6 +123,7 @@
     </ApplicationDefinition>
     <Compile Include="Converters\BoolToVisibilityConverter.cs" />
     <Compile Include="Converters\InverseBooleanConverter.cs" />
+    <Compile Include="RelayCommand.cs" />
     <Compile Include="xBimLanding.xaml.cs">
       <DependentUpon>xBimLanding.xaml</DependentUpon>
     </Compile>

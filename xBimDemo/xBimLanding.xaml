@@ -10,7 +10,6 @@
     <UserControl.Resources>
         <ObjectDataProvider x:Key="ModelProvider"  IsInitialLoadEnabled="False" ></ObjectDataProvider>
         <converter:BoolToVisibilityConverter x:Key="StatusBarVisibilityConverter" TrueValue="Visible" FalseValue="Hidden" />
-        <converter:InverseBooleanConverter x:Key="InverseBooleanConverter" />
     </UserControl.Resources>
     <Grid DataContext="{StaticResource ModelProvider}" Name="MainFrame">
         <xbim:DrawingControl3D
@@ -30,13 +29,11 @@
                 <Grid>
                     <ProgressBar Name="Bar" Height="20" Maximum="100" Minimum="0" Width="150"  HorizontalAlignment="Center" VerticalAlignment="Center"></ProgressBar>
                     <TextBlock Name="StatusMsg" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="Chocolate">Parsing</TextBlock>
-                    <!--<TextBlock Text="{Binding ElementName=Bar, Path=Value, StringFormat={}{0:0}%}" HorizontalAlignment="Center" VerticalAlignment="Center" />-->
                 </Grid>
             </StatusBarItem>
         </StatusBar>
         <Button HorizontalAlignment="Left" VerticalAlignment="Bottom"
-                Click="ButtonBase_OnClick"
-                IsEnabled="{Binding Path=IsLoading, ElementName=BimLanding, Converter={StaticResource InverseBooleanConverter}}"
+                Command="{Binding Path=ButtonCommand, ElementName=BimLanding}"
                 >Import</Button>
     </Grid>
 </UserControl>

@@ -1,12 +1,12 @@
 ﻿using System;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Data;
+using System.Windows.Input;
+using Microsoft.Win32;
 using Xbim.IO;
 using Xbim.ModelGeometry.Scene;
 using Xbim.XbimExtensions.Interfaces;
@@ -22,13 +22,50 @@ namespace xBimDemo
     {
         #region Field
 
-        private const string IfcFilename = @"C:\Temp\ifc_files\Duplex_Plumbing_20121113.ifc";
+        private string _ifcFilename;
         private BackgroundWorker _worker;
         private string _temporaryXbimFileName;
         private string _mainWindowsName;
         private bool _isLoading;
+        private string _openedModelFileName;
+        private ICommand _buttonCommand;
 
         #endregion Field
+
+        #region Properties
+
+        public string MainWindowsName
+        {
+            get { return _mainWindowsName; }
+            set
+            {
+                _mainWindowsName = value;
+                OnPropertyChanged(nameof(MainWindowsName));
+            }
+        }
+
+        public bool IsLoading
+        {
+            get { return _isLoading; }
+            set
+            {
+                _isLoading = value;
+                OnPropertyChanged(nameof(IsLoading));
+            }
+        }
+
+        public ICommand ButtonCommand
+        {
+            get
+            {
+                return _buttonCommand ??
+                    (_buttonCommand = new RelayCommand(
+                    param => ButtonBase_OnClick(),
+                    param => CanImport()));
+            }
+        }
+
+        #endregion Properties
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -59,34 +96,28 @@ namespace xBimDemo
 
         private ObjectDataProvider ModelProvider => MainFrame.DataContext as ObjectDataProvider;
 
-        public string MainWindowsName
-        {
-            get { return _mainWindowsName; }
-            set
-            {
-                _mainWindowsName = value;
-                OnPropertyChanged(nameof(MainWindowsName));
-            }
-        }
-
-        public bool IsLoading
-        {
-            get { return _isLoading; }
-            set
-            {
-                _isLoading = value;
-                OnPropertyChanged(nameof(IsLoading));
-            }
-        }
-
         [NotifyPropertyChangedInvocator]
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
-        private void ButtonBase_OnClick(object sender, RoutedEventArgs e)
+        private bool CanImport()
         {
+            return !_isLoading;
+        }
+
+        private void ButtonBase_OnClick()
+        {
+            var dialog = new OpenFileDialog();
+            // open file dialogue
+            if (dialog.ShowDialog() != true) return;
+
+            // return if selected same file
+            if (dialog.FileName == _openedModelFileName) return;
+            _ifcFilename = dialog.FileName;
+
+            // call worker
             _worker.DoWork += OpenFile;
             _worker.RunWorkerAsync();
         }
@@ -100,8 +131,9 @@ namespace xBimDemo
                 if (worker != null)
                 {
                     IsLoading = true;
+                    _openedModelFileName = _ifcFilename;
                     _temporaryXbimFileName = Path.GetTempFileName();
-                    model.CreateFrom(IfcFilename,
+                    model.CreateFrom(_ifcFilename,
                         _temporaryXbimFileName,
                         worker.ReportProgress,
                         true);
@@ -132,7 +164,7 @@ namespace xBimDemo
             catch (Exception ex)
             {
                 var sb = new StringBuilder();
-                sb.AppendLine("Error reading " + IfcFilename);
+                sb.AppendLine("Error reading " + _ifcFilename);
                 var indent = "\t";
                 while (ex != null)
                 {
@@ -166,10 +198,14 @@ namespace xBimDemo
                 {
                     ModelProvider.ObjectInstance = args.Result;
                     ModelProvider.Refresh();
-                    Bar.Value = 0;
-                    StatusMsg.Text = "";
-                    IsLoading = false;
                 }
+                else if (args.Result is Exception)
+                {
+                    MessageBox.Show(args.Result.ToString());
+                }
+                Bar.Value = 0;
+                StatusMsg.Text = "";
+                IsLoading = false;
             };
         }
     }
